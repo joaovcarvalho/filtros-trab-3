@@ -5,53 +5,31 @@
  * or any other size. 
  */
  
-PImage img = loadImage("moonwalk.jpg");
-PImage vintageImage = loadImage("moonwalk.jpg");
+InputManager inputManager;
 Filter filter;
 
 void setup() {
   size(800, 500);
   // The image file must be in the data folder of the current sketch 
   // to load successfully
-  selectInput("Select the image:", "fileSelected");
-  selectInput("Select the vintage image:", "fileSeletectedVintage");
-}
+  inputManager = new InputManager();
+  inputManager.requestImage("Selecione uma image: ");
 
-void fileSeletectedVintage(File selection) {
-  if (selection == null) {
-    println("Window was closed or the user hit cancel.");
-  } else {
-    println("User selected " + selection.getAbsolutePath());
-    vintageImage = loadImage(selection.getAbsolutePath());  
-    //size(img.width*2, img.height*2);
-    vintageImage.resize(width/2, height);
-    filter = new VintageFilter(vintageImage);
-  }
-}
-
-void fileSelected(File selection) {
-  if (selection == null) {
-    println("Window was closed or the user hit cancel.");
-  } else {
-    println("User selected " + selection.getAbsolutePath());
-    img = loadImage(selection.getAbsolutePath());  
-    //size(img.width*2, img.height*2);
-    img.resize(width/2, height);
-  }
+  filter = new BoxFilter(10);
 }
 
 void draw() {
   // Displays the image at its actual size at point (0,0)
   background(255);
-  if(img == null)
+  if(inputManager.getImage() == null){
     return;
+  }
+
+  image(inputManager.getImage(), 0, 0, width/2, height);
   
-  image(img, 0, 0);
+  PImage result = filter.apply(inputManager.getImage());
   
-  
-  PImage result = filter.apply(img);
-  
-  image(result, width/2, 0);
+  image(result, width/2, 0, width/2, height);
 }
 
 
