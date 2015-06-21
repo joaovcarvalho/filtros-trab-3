@@ -13,7 +13,7 @@ public class BoxFilter extends Filter{
  
  public PImage apply(PImage img){
     int filterSize = matrix.length;
-    int filterRadius = (int) filterSize / 2;
+    int filterRadius = (int) (filterSize / 2);
     
     loadPixels();
     PImage result = new PImage(img.width, img.height);

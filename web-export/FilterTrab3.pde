@@ -1,57 +1,38 @@
 /**
- * Load and Display 
- * 
- * Images can be loaded and displayed to the screen at their actual size
- * or any other size. 
+ *    This examples shows you how to interact with the HTML5 range input. <br />
+ *    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+ *    <form id="form1" runat="server">
+ *        <input type='file' id="imgInp" />
+ *        <img id="blah" src="#" alt="your image" style="display:none;" />
+ *    </form>
+ *    (Slider by Firefox currently not supported.) <br />
  */
  
-PImage img = loadImage("moonwalk.jpg");
-PImage vintageImage = loadImage("moonwalk.jpg");
+InputManager inputManager;
 Filter filter;
 
 void setup() {
-  size(800, 500);
+  size(800, 600);
   // The image file must be in the data folder of the current sketch 
   // to load successfully
-  selectInput("Select the image:", "fileSelected");
-  selectInput("Select the vintage image:", "fileSeletectedVintage");
-}
+  inputManager = new InputManager();
+  inputManager.requestImage("Selecione uma image: ");
 
-void fileSeletectedVintage(File selection) {
-  if (selection == null) {
-    println("Window was closed or the user hit cancel.");
-  } else {
-    println("User selected " + selection.getAbsolutePath());
-    vintageImage = loadImage(selection.getAbsolutePath());  
-    //size(img.width*2, img.height*2);
-    vintageImage.resize(width/2, height);
-    filter = new VintageFilter(vintageImage);
-  }
-}
-
-void fileSelected(File selection) {
-  if (selection == null) {
-    println("Window was closed or the user hit cancel.");
-  } else {
-    println("User selected " + selection.getAbsolutePath());
-    img = loadImage(selection.getAbsolutePath());  
-    //size(img.width*2, img.height*2);
-    img.resize(width/2, height);
-  }
+  filter = new BlackAndWhiteFilter();
 }
 
 void draw() {
   // Displays the image at its actual size at point (0,0)
   background(255);
-  if(img == null)
+  if(inputManager.getImage() == null){
     return;
+  }
+
+  image(inputManager.getImage(), 0, 0, width/2, height);
   
-  image(img, 0, 0);
+  PImage result = filter.apply(inputManager.getImage());
   
-  
-  PImage result = filter.apply(img);
-  
-  image(result, width/2, 0);
+  image(result, width/2, 0, width/2, height);
 }
 
 
@@ -59,6 +40,11 @@ void printMatrix(float[][] m){
   for(int i = 0; i < m.length; i++)
     for(int j =0; j < m[i].length; j++)
       println(m[i][j]);
+}
+
+ /* this is being called from JavaScript when the range slider is changed */
+InputManager getInputManager(){
+   return inputManager; 
 }
 public class BlackAndWhiteFilter extends Filter{
  
@@ -94,7 +80,7 @@ public class BoxFilter extends Filter{
  
  public PImage apply(PImage img){
     int filterSize = matrix.length;
-    int filterRadius = (int) filterSize / 2;
+    int filterRadius = (int) (filterSize / 2);
     
     loadPixels();
     PImage result = new PImage(img.width, img.height);
@@ -150,6 +136,61 @@ public class Filter{
     return bound - 1;
  }
   
+}
+public class InputManager {
+
+	PImage tmpImage;
+        PImage img;
+	File file;
+
+	public InputManager () {
+		tmpImage = null;
+                img = null;
+	}
+
+	public void requestImage(String text){
+		try {
+           selectInput(text, "callback", file, this);
+        } catch (Exception e) {
+           println("selectInput não suportado.");     
+        }
+	}
+
+	public void callback(File selection){
+		  if (selection == null) {
+		    println("Window was closed or the user hit cancel.");
+		  } else {
+		    println("User selected " + selection.getAbsolutePath());
+		    img = loadImage(selection.getAbsolutePath());
+		  }
+	}
+
+	public PImage getImage(){
+		return this.img;
+	}
+
+    public void initImage(int width, int height){
+       tmpImage = new PImage(width, height); 
+    }
+    
+    public void setWidthImage(int width){
+      tmpImage.width = width;
+    }
+    
+    public void setHeightImage(int height){
+      tmpImage.height = height;
+    }
+    
+    public void setPixel(int i, int r, int g, int b){
+       tmpImage.pixels[i] = color(r,g,b);
+    }
+    
+    public void updatePixels(){
+       tmpImage.updatePixels();
+       tmpImage.resize(200,200);
+       img = tmpImage;
+    }
+
 }
 class VintageFilter extends Filter{
   
