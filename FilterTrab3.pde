@@ -18,7 +18,7 @@ void setup() {
   inputManager = new InputManager();
   inputManager.requestImage("Selecione uma image: ");
 
-  filter = new BlackAndWhiteFilter();
+  filter = new GaussianBlur(7, 20);
 }
 
 void draw() {
@@ -37,9 +37,13 @@ void draw() {
 
 
 void printMatrix(float[][] m){
-  for(int i = 0; i < m.length; i++)
-    for(int j =0; j < m[i].length; j++)
-      println(m[i][j]);
+  for(int i = 0; i < m.length; i++){
+    for(int j =0; j < m[i].length; j++){
+      print(m[i][j] + " ");
+    }
+    println("");
+  }
+    
 }
 
  /* this is being called from JavaScript when the range slider is changed */
