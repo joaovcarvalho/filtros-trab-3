@@ -1,7 +1,7 @@
 public class InputManager {
 
 	PImage tmpImage;
-        PImage img;
+    PImage img;
 	File file;
 
 	public InputManager () {
@@ -21,7 +21,6 @@ public class InputManager {
 		  if (selection == null) {
 		    println("Window was closed or the user hit cancel.");
 		  } else {
-		    println("User selected " + selection.getAbsolutePath());
 		    img = loadImage(selection.getAbsolutePath());
 		  }
 	}
@@ -48,8 +47,9 @@ public class InputManager {
     
     public void updatePixels(){
        tmpImage.updatePixels();
-       tmpImage.resize(200,200);
+       tmpImage.resize(width/2, height);
        img = tmpImage;
     }
+
 
 }

@@ -1,51 +1,3 @@
-/**
- *    This examples shows you how to interact with the HTML5 range input. <br />
- *    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
- *    <form id="form1" runat="server">
- *        <input type='file' id="imgInp" />
- *        <img id="blah" src="#" alt="your image" style="display:none;" />
- *    </form>
- *    (Slider by Firefox currently not supported.) <br />
- */
- 
-InputManager inputManager;
-Filter filter;
-
-void setup() {
-  size(800, 600);
-  // The image file must be in the data folder of the current sketch 
-  // to load successfully
-  inputManager = new InputManager();
-  inputManager.requestImage("Selecione uma image: ");
-
-  filter = new BlackAndWhiteFilter();
-}
-
-void draw() {
-  // Displays the image at its actual size at point (0,0)
-  background(255);
-  if(inputManager.getImage() == null){
-    return;
-  }
-
-  image(inputManager.getImage(), 0, 0, width/2, height);
-  
-  PImage result = filter.apply(inputManager.getImage());
-  
-  image(result, width/2, 0, width/2, height);
-}
-
-
-void printMatrix(float[][] m){
-  for(int i = 0; i < m.length; i++)
-    for(int j =0; j < m[i].length; j++)
-      println(m[i][j]);
-}
-
- /* this is being called from JavaScript when the range slider is changed */
-InputManager getInputManager(){
-   return inputManager; 
-}
 public class BlackAndWhiteFilter extends Filter{
  
  public PImage apply(PImage img){
@@ -65,18 +17,30 @@ public class BlackAndWhiteFilter extends Filter{
  } 
   
 }
-public class BoxFilter extends Filter{
-  
- private float[][] matrix;
+
  
+public class BoxFilter extends ConvolutionFilter{
+
  BoxFilter(int n){
-   matrix = new float[n][n];
-   for(int i = 0; i < n; i++){
+    generateMatrix(n);
+ }
+
+ public void generateMatrix(int n){
+  matrix = new float[n][n];
+  for(int i = 0; i < n; i++){
      for(int j = 0 ; j < n; j++){
-        matrix[i][j] = 1; 
+        matrix[i][j] = 1 / n*n; 
      }
    }
- }
+  }
+}
+
+ 
+public abstract class ConvolutionFilter extends Filter{
+  
+ abstract void generateMatrix(int n); 
+
+ protected float[][] matrix;
  
  public PImage apply(PImage img){
     int filterSize = matrix.length;
@@ -111,7 +75,7 @@ public class BoxFilter extends Filter{
            }
          }
          
-         result.set(i,j, color( round(newRed/(filterSize*filterSize)),round(newGreen/(filterSize*filterSize)),round(newBlue/(filterSize*filterSize))  ));
+         result.set(i,j, color( newRed, newGreen, newBlue  ));
       }  
     }
    
@@ -120,6 +84,8 @@ public class BoxFilter extends Filter{
  } 
   
 }
+
+ 
 public class Filter{
   
  public PImage apply(PImage img){
@@ -137,10 +103,101 @@ public class Filter{
  }
   
 }
+
+ 
+/**
+ *    This examples shows you how to interact with the HTML5 range input. <br />
+ *    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+ *    <form id="form1" runat="server">
+ *        <input type='file' id="imgInp" />
+ *        <img id="blah" src="#" alt="your image" style="display:none;" />
+ *    </form>
+ *    (Slider by Firefox currently not supported.) <br />
+ */
+ 
+InputManager inputManager;
+Filter filter;
+PImage result;
+
+boolean applied = false;
+
+void setup() {
+  size(800, 400);
+  // The image file must be in the data folder of the current sketch 
+  // to load successfully
+  inputManager = new InputManager();
+  inputManager.requestImage("Selecione uma image: ");
+
+  filter = new GaussianBlur(3, 20);
+}
+
+void draw() {
+  // Displays the image at its actual size at point (0,0)
+  background(255);
+  if(inputManager.getImage() == null){
+    return;
+  }else{
+    if(!applied){
+      result = filter.apply(inputManager.getImage());
+      applied = true;
+    }
+
+    image(inputManager.getImage(), 0, 0);
+    image(result, width/2, 0);
+  }
+}
+
+
+void printMatrix(float[][] m){
+  for(int i = 0; i < m.length; i++){
+    for(int j =0; j < m[i].length; j++){
+      print(m[i][j] + " ");
+    }
+    println("");
+  }
+    
+}
+
+ /* this is being called from JavaScript when the range slider is changed */
+InputManager getInputManager(){
+   return inputManager; 
+}
+
+ 
+public class GaussianBlur extends ConvolutionFilter{
+  private float sigma = 1;
+
+ GaussianBlur(int n, float s){
+    this.sigma = s;
+    generateMatrix(n);
+ }
+
+ public void generateMatrix(int n){
+    matrix = new float[n][n];
+    int mean = (int)(n/2);
+    float sum = 0.0;
+    for(int i = 0; i < n; i++){
+       for(int j = 0 ; j < n; j++){
+          matrix[i][j] = exp( -0.5 * ( pow( (i-mean) /sigma, 2.0) + pow( (j-mean)/sigma,2.0) ) )
+                         / (2 * PI * sigma * sigma); 
+
+          sum += matrix[i][j];               
+       }
+     }
+
+     for (int i = 0; i < n; ++i) {
+       for (int j = 0; j < n; ++j) {
+         matrix[i][j] /= sum;
+       }
+     }
+ }
+}
+
+ 
 public class InputManager {
 
 	PImage tmpImage;
-        PImage img;
+    PImage img;
 	File file;
 
 	public InputManager () {
@@ -160,7 +217,6 @@ public class InputManager {
 		  if (selection == null) {
 		    println("Window was closed or the user hit cancel.");
 		  } else {
-		    println("User selected " + selection.getAbsolutePath());
 		    img = loadImage(selection.getAbsolutePath());
 		  }
 	}
@@ -187,11 +243,14 @@ public class InputManager {
     
     public void updatePixels(){
        tmpImage.updatePixels();
-       tmpImage.resize(200,200);
+       tmpImage.resize(width/2, height);
        img = tmpImage;
     }
 
+
 }
+
+ 
 class VintageFilter extends Filter{
   
   private PImage vintage;
@@ -217,6 +276,5 @@ class VintageFilter extends Filter{
     return result;
   }
 }
-
 
 

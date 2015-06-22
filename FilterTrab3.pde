@@ -10,15 +10,18 @@
  
 InputManager inputManager;
 Filter filter;
+PImage result;
+
+boolean applied = false;
 
 void setup() {
-  size(800, 600);
+  size(800, 400);
   // The image file must be in the data folder of the current sketch 
   // to load successfully
   inputManager = new InputManager();
   inputManager.requestImage("Selecione uma image: ");
 
-  filter = new GaussianBlur(7, 20);
+  filter = new GaussianBlur(3, 20);
 }
 
 void draw() {
@@ -26,13 +29,15 @@ void draw() {
   background(255);
   if(inputManager.getImage() == null){
     return;
-  }
+  }else{
+    if(!applied){
+      result = filter.apply(inputManager.getImage());
+      applied = true;
+    }
 
-  image(inputManager.getImage(), 0, 0, width/2, height);
-  
-  PImage result = filter.apply(inputManager.getImage());
-  
-  image(result, width/2, 0, width/2, height);
+    image(inputManager.getImage(), 0, 0);
+    image(result, width/2, 0);
+  }
 }
 
 
