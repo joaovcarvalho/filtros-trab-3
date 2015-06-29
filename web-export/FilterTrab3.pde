@@ -29,9 +29,11 @@ public class BoxFilter extends ConvolutionFilter{
   matrix = new float[n][n];
   for(int i = 0; i < n; i++){
      for(int j = 0 ; j < n; j++){
-        matrix[i][j] = 1 / n*n; 
+        matrix[i][j] = 1 / (n*n);
      }
    }
+
+   console.log(matrix);
   }
 }
 
@@ -86,6 +88,24 @@ public abstract class ConvolutionFilter extends Filter{
 }
 
  
+public class Crop{
+
+  public PImage apply(PImage img, int xInicial, int yInicial, int xFinal, int yFinal){
+    PImage result = new PImage(xFinal - xInicial, yFinal - yInicial);
+    for(int i = xInicial; i < xFinal; i++){
+      for(int j = yInicial; j < yFinal; j++){
+        result.set(i - xInicial, j - yInicial, img.get(i,j));
+      }
+    }
+
+    result.updatePixels();
+    return result;
+  }
+
+
+}
+
+ 
 public class Filter{
   
  public PImage apply(PImage img){
@@ -114,7 +134,9 @@ public class Filter{
  *    </form>
  *    (Slider by Firefox currently not supported.) <br />
  */
- 
+
+ /* @pjs preload="vintage.jpg" */
+
 InputManager inputManager;
 Filter filter;
 PImage result;
@@ -123,12 +145,12 @@ boolean applied = false;
 
 void setup() {
   size(800, 400);
-  // The image file must be in the data folder of the current sketch 
+  // The image file must be in the data folder of the current sketch
   // to load successfully
   inputManager = new InputManager();
   inputManager.requestImage("Selecione uma image: ");
 
-  filter = new GaussianBlur(3, 20);
+  filter = new BoxFilter(5);
 }
 
 void draw() {
@@ -155,12 +177,33 @@ void printMatrix(float[][] m){
     }
     println("");
   }
-    
+
 }
 
  /* this is being called from JavaScript when the range slider is changed */
 InputManager getInputManager(){
-   return inputManager; 
+   return inputManager;
+}
+
+void setApplied(boolean b){
+  applied = b;
+}
+
+void applyFilter(int i){
+
+  if(i == 1)
+    filter = new VintageFilter();
+
+  if(i == 2)
+    filter = new BlackAndWhiteFilter();
+
+  if(i == 3)
+    filter = new BoxFilter(3);
+
+  if(i == 4)
+    filter = new GaussianBlur(5,5);
+
+  applied = false;
 }
 
  
@@ -209,7 +252,7 @@ public class InputManager {
 		try {
            selectInput(text, "callback", file, this);
         } catch (Exception e) {
-           println("selectInput não suportado.");     
+           //println("selectInput não suportado.");     
         }
 	}
 
@@ -226,21 +269,21 @@ public class InputManager {
 	}
 
     public void initImage(int width, int height){
-       tmpImage = new PImage(width, height); 
+       tmpImage = new PImage(width, height);
     }
-    
+
     public void setWidthImage(int width){
       tmpImage.width = width;
     }
-    
+
     public void setHeightImage(int height){
       tmpImage.height = height;
     }
-    
+
     public void setPixel(int i, int r, int g, int b){
        tmpImage.pixels[i] = color(r,g,b);
     }
-    
+
     public void updatePixels(){
        tmpImage.updatePixels();
        tmpImage.resize(width/2, height);
@@ -252,29 +295,27 @@ public class InputManager {
 
  
 class VintageFilter extends Filter{
-  
+
   private PImage vintage;
-  
-  VintageFilter(PImage vintage){
-    this.vintage = vintage;
+
+  VintageFilter(){
+    this.vintage = loadImage("vintage.jpg");
   }
-  
+
   public PImage apply(PImage img){
     PImage result = new PImage(img.width, img.height);
     for(int i = 0; i < img.width; i++){
       for(int j = 0; j < img.height; j++){
          color imgColor = img.get(i,j);
          color imgVintageColor = this.vintage.get(i,j);
-         
+
          float r = red(imgColor)*0.6 + red(imgVintageColor)*0.4;
          float g = green(imgColor)*0.6 + green(imgVintageColor)*0.4;
          float b = blue(imgColor)*0.6 + blue(imgVintageColor)*0.4;
-         result.set(i,j, color(r,g,b));  
+         result.set(i,j, color(r,g,b));
       }
     }
-    
+
     return result;
   }
 }
-
-

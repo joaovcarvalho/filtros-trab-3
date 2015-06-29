@@ -7,7 +7,9 @@
  *    </form>
  *    (Slider by Firefox currently not supported.) <br />
  */
- 
+
+ /* @pjs preload="vintage.jpg" */
+
 InputManager inputManager;
 Filter filter;
 PImage result;
@@ -16,12 +18,12 @@ boolean applied = false;
 
 void setup() {
   size(800, 400);
-  // The image file must be in the data folder of the current sketch 
+  // The image file must be in the data folder of the current sketch
   // to load successfully
   inputManager = new InputManager();
   inputManager.requestImage("Selecione uma image: ");
 
-  filter = new GaussianBlur(3, 20);
+  filter = new BoxFilter(5);
 }
 
 void draw() {
@@ -48,10 +50,31 @@ void printMatrix(float[][] m){
     }
     println("");
   }
-    
+
 }
 
  /* this is being called from JavaScript when the range slider is changed */
 InputManager getInputManager(){
-   return inputManager; 
+   return inputManager;
+}
+
+void setApplied(boolean b){
+  applied = b;
+}
+
+void applyFilter(int i){
+
+  if(i == 1)
+    filter = new VintageFilter();
+
+  if(i == 2)
+    filter = new BlackAndWhiteFilter();
+
+  if(i == 3)
+    filter = new BoxFilter(3);
+
+  if(i == 4)
+    filter = new GaussianBlur(5,5);
+
+  applied = false;
 }

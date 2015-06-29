@@ -13,7 +13,7 @@ public class InputManager {
 		try {
            selectInput(text, "callback", file, this);
         } catch (Exception e) {
-           println("selectInput não suportado.");     
+           //println("selectInput não suportado.");     
         }
 	}
 
@@ -30,21 +30,21 @@ public class InputManager {
 	}
 
     public void initImage(int width, int height){
-       tmpImage = new PImage(width, height); 
+       tmpImage = new PImage(width, height);
     }
-    
+
     public void setWidthImage(int width){
       tmpImage.width = width;
     }
-    
+
     public void setHeightImage(int height){
       tmpImage.height = height;
     }
-    
+
     public void setPixel(int i, int r, int g, int b){
        tmpImage.pixels[i] = color(r,g,b);
     }
-    
+
     public void updatePixels(){
        tmpImage.updatePixels();
        tmpImage.resize(width/2, height);
