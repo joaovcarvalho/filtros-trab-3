@@ -4,6 +4,11 @@ module.exports = function(grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
 
+    watch: {
+      files: '*.pde',
+      tasks: 'concat'
+    },
+
     concat: {
       options: {
         separator: '\n \n',
@@ -16,5 +21,6 @@ module.exports = function(grunt) {
   });
 
   grunt.loadNpmTasks('grunt-contrib-concat');
-  grunt.registerTask('default', ['concat']);
+  grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.registerTask('default', ['watch']);
 };

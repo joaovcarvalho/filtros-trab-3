@@ -13,7 +13,7 @@ public class InputManager {
 		try {
            selectInput(text, "callback", file, this);
         } catch (Exception e) {
-           //println("selectInput não suportado.");     
+           //println("selectInput não suportado.");
         }
 	}
 
@@ -47,7 +47,7 @@ public class InputManager {
 
     public void updatePixels(){
        tmpImage.updatePixels();
-       tmpImage.resize(width/2, height);
+       tmpImage.resize(width, height);
        img = tmpImage;
     }
 

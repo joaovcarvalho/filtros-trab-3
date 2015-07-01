@@ -1,8 +1,8 @@
 public class BlackAndWhiteFilter extends Filter{
- 
+
  public PImage apply(PImage img){
     PImage result = new PImage(img.width, img.height);
-  
+
     for(int i = 0; i< img.pixels.length; i++){
       color c = color(img.pixels[i]);
       float r = red(c);
@@ -11,11 +11,11 @@ public class BlackAndWhiteFilter extends Filter{
       float media = (r + g + b)/3;
       result.pixels[i] = color(media,media, media);
     }
-    
+
     result.updatePixels();
     return result;
- } 
-  
+ }
+
 }
 
  
@@ -38,53 +38,59 @@ public class BoxFilter extends ConvolutionFilter{
 }
 
  
-public abstract class ConvolutionFilter extends Filter{
-  
- abstract void generateMatrix(int n); 
+public class ConvolutionFilter extends Filter{
 
- protected float[][] matrix;
- 
+  protected float[][] matrix;
+
+  void generateMatrix(int n){
+
+  };
+
+  public void setMatrix(float[][] m){
+    this.matrix = m;
+  }
+
  public PImage apply(PImage img){
     int filterSize = matrix.length;
     int filterRadius = (int) (filterSize / 2);
-    
+
     loadPixels();
     PImage result = new PImage(img.width, img.height);
-    
+
     float newRed = 0.0;
     float newBlue = 0.0;
     float newGreen = 0.0;
-    
+
     for(int i = 0; i < img.width; i++){
       for(int j = 0; j < img.height; j++){
-        
+
         newRed = 0.0;
         newBlue = 0.0;
         newGreen = 0.0;
-        
+
         for(int fi = 0; fi < filterSize; fi++){
          for(int fj = 0 ; fj < filterSize; fj++){
-           
+
              color old = img.get(
                  this.bound(i + fi - filterRadius, img.width),
                  this.bound(j + fj - filterRadius, img.height)
                );
-               
-             newRed += matrix[fi][fj] * red(old);
-             newBlue += matrix[fi][fj] * blue(old);
-             newGreen += matrix[fi][fj] * green(old);
-             
+
+             newRed += this.matrix[fi][fj] * red(old);
+             newBlue += this.matrix[fi][fj] * blue(old);
+             newGreen += this.matrix[fi][fj] * green(old);
+
            }
          }
-         
+
          result.set(i,j, color( newRed, newGreen, newBlue  ));
-      }  
+      }
     }
-   
+
     updatePixels();
     return result;
- } 
-  
+ }
+
 }
 
  
@@ -141,16 +147,14 @@ InputManager inputManager;
 Filter filter;
 PImage result;
 
-boolean applied = false;
-
 void setup() {
-  size(800, 400);
+  size(400, 400);
   // The image file must be in the data folder of the current sketch
   // to load successfully
   inputManager = new InputManager();
   inputManager.requestImage("Selecione uma image: ");
 
-  filter = new BoxFilter(5);
+  filter = new SobelFilter();
 }
 
 void draw() {
@@ -159,13 +163,7 @@ void draw() {
   if(inputManager.getImage() == null){
     return;
   }else{
-    if(!applied){
-      result = filter.apply(inputManager.getImage());
-      applied = true;
-    }
-
     image(inputManager.getImage(), 0, 0);
-    image(result, width/2, 0);
   }
 }
 
@@ -185,11 +183,11 @@ InputManager getInputManager(){
    return inputManager;
 }
 
-void setApplied(boolean b){
-  applied = b;
-}
-
-void applyFilter(int i){
+void applyFilter(int i, callback){
+  if(i == 0){
+    result = inputManager.getImage();
+    callback();
+  }
 
   if(i == 1)
     filter = new VintageFilter();
@@ -203,7 +201,13 @@ void applyFilter(int i){
   if(i == 4)
     filter = new GaussianBlur(5,5);
 
-  applied = false;
+  result = filter.apply(inputManager.getImage());
+  callback();
+}
+
+void getImageResult(){
+  var object = { 'data': result.pixels, 'width': result.width, 'height': result.height };
+  return object;
 }
 
  
@@ -252,7 +256,7 @@ public class InputManager {
 		try {
            selectInput(text, "callback", file, this);
         } catch (Exception e) {
-           //println("selectInput não suportado.");     
+           //println("selectInput não suportado.");
         }
 	}
 
@@ -286,10 +290,66 @@ public class InputManager {
 
     public void updatePixels(){
        tmpImage.updatePixels();
-       tmpImage.resize(width/2, height);
+       tmpImage.resize(width, height);
        img = tmpImage;
     }
 
+
+}
+
+ 
+public class SobelFilter extends Filter{
+
+  ConvolutionFilter gx;
+  ConvolutionFilter gy;
+
+  public PImage apply(PImage img){
+     gx = new ConvolutionFilter();
+     gy = new ConvolutionFilter();
+     gx.setMatrix([[-1, 0, +1], [-2, 0, +2], [-1, 0, +1]]);
+     gy.setMatrix([[+1, +2, +1], [0,0,0], [-1, -2, -1]]);
+
+     gxResult = gx.apply(img);
+     gyResult = gy.apply(img);
+
+     int filterRadius = (int) (3 / 2);
+
+     loadPixels();
+     PImage result = new PImage(img.width, img.height);
+
+     for(int i = 0; i < img.width; i++){
+       for(int j = 0; j < img.height; j++){
+
+         newRed = 0.0;
+         newBlue = 0.0;
+         newGreen = 0.0;
+
+         for(int fi = 0; fi < 3; fi++){
+          for(int fj = 0 ; fj < 3; fj++){
+
+              color magX = gxResult.get(
+                  this.bound(i + fi - filterRadius, img.width),
+                  this.bound(j + fj - filterRadius, img.height)
+                );
+
+              color magY = gyResult.get(
+                  this.bound(i + fi - filterRadius, img.width),
+                  this.bound(j + fj - filterRadius, img.height)
+                );
+
+              newRed += sqrt( pow(red(magX),2) + pow(red(magY),2));
+              newBlue += sqrt( pow(blue(magX),2) + pow(blue(magY),2));
+              newGreen += sqrt( pow(green(magX),2) + pow(green(magY),2));
+
+            }
+          }
+
+          result.set(i,j, color( newRed, newGreen, newBlue  ));
+       }
+     }
+
+     return result;
+  }
 
 }
 

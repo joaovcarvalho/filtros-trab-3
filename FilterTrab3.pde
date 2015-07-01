@@ -14,16 +14,14 @@ InputManager inputManager;
 Filter filter;
 PImage result;
 
-boolean applied = false;
-
 void setup() {
-  size(800, 400);
+  size(400, 400);
   // The image file must be in the data folder of the current sketch
   // to load successfully
   inputManager = new InputManager();
   inputManager.requestImage("Selecione uma image: ");
 
-  filter = new BoxFilter(5);
+  filter = new SobelFilter();
 }
 
 void draw() {
@@ -32,13 +30,7 @@ void draw() {
   if(inputManager.getImage() == null){
     return;
   }else{
-    if(!applied){
-      result = filter.apply(inputManager.getImage());
-      applied = true;
-    }
-
     image(inputManager.getImage(), 0, 0);
-    image(result, width/2, 0);
   }
 }
 
@@ -58,11 +50,11 @@ InputManager getInputManager(){
    return inputManager;
 }
 
-void setApplied(boolean b){
-  applied = b;
-}
-
-void applyFilter(int i){
+void applyFilter(int i, callback){
+  if(i == 0){
+    result = inputManager.getImage();
+    callback();
+  }
 
   if(i == 1)
     filter = new VintageFilter();
@@ -76,5 +68,11 @@ void applyFilter(int i){
   if(i == 4)
     filter = new GaussianBlur(5,5);
 
-  applied = false;
+  result = filter.apply(inputManager.getImage());
+  callback();
+}
+
+void getImageResult(){
+  var object = { 'data': result.pixels, 'width': result.width, 'height': result.height };
+  return object;
 }
