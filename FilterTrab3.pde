@@ -16,9 +16,12 @@ PImage result;
 MouseSelection mouseSelection;
 
 void setup() {
-  size(400, 400, OPENGL);
+  size(400, 400);
   // The image file must be in the data folder of the current sketch
   // to load successfully
+  UnitTests ut = new UnitTests();
+  ut.runTests();
+
   inputManager = new InputManager();
   inputManager.requestImage("Selecione uma image: ");
 
@@ -29,26 +32,11 @@ void setup() {
 void draw() {
   // Displays the image at its actual size at point (0,0)
   background(255);
-
-  if(inputManager.getImage() == null){
-    // return;
-  }else{
+  if(inputManager.getImage() != null){
     image(inputManager.getImage(), 0, 0);
   }
 
-  //mouseSelection.displaySelectionBox();
-
-}
-
-
-void printMatrix(float[][] m){
-  for(int i = 0; i < m.length; i++){
-    for(int j =0; j < m[i].length; j++){
-      print(m[i][j] + " ");
-    }
-    println("");
-  }
-
+  mouseSelection.displaySelectionBox();
 }
 
  /* this is being called from JavaScript when the range slider is changed */
@@ -81,7 +69,7 @@ void applyFilter(int i, callback){
 
   if(i == 4)
     try{
-      filter = new GaussianBlur($('#sigma').val(),$('#size-gaussian').val());
+      filter = new GaussianBlur( (int) $('#size-gaussian').val(), (int) $('#sigma').val());
     } catch(e){
       $("#error2-box").html("O tamanho da matriz não pode ser par.");
     }
@@ -90,11 +78,24 @@ void applyFilter(int i, callback){
   if(i == 5)
     filter = new SobelFilter();
 
-  if(i == 6)
-    filter = new Crop($("#x-inicial").val(),
-                      $("#y-inicial").val(),
-                      $("#x-final").val(),
-                      $("#y-final").val());
+  if(i == 6){
+
+    int xi, yi, xf, yf;
+    if(mouseSelection.isSelected()){
+      xi = mouseSelection.getSelectedInitial().x;
+      yi = mouseSelection.getSelectedInitial().y;
+      xf = mouseSelection.getSelectedFinal().x;
+      yf = mouseSelection.getSelectedFinal().y;
+    }else{
+      xi = $("#x-inicial").val();
+      yi = $("#y-inicial").val();
+      xf = $("#x-final").val();
+      yf = $("#y-final").val();
+    }
+
+    filter = new Crop(xi,yi, xf, yf);
+
+  }
 
   if(i == 7){
     filter = new ConvolutionFilter(3);
@@ -115,6 +116,7 @@ void applyFilter(int i, callback){
   if(filter == null){
     result = inputManager.getImage();
   }else{
+    filter.setMouseSelection(mouseSelection);
     result = filter.apply(inputManager.getImage());
   }
 
@@ -126,13 +128,14 @@ void getImageResult(){
   return object;
 }
 
+ void mouseClicked() {
+  mouseSelection.mouseClicked(mouseX, mouseY);
+}
 
-// void mouseClicked(int x, int y) {
-//   mouseSelection.mouseClicked(x, y);
-// }
-//
-// void mouseDragged(int x, int y) {
-//   console.log(x);
-//   console.log(y);
-//   mouseSelection.mouseClicked(x, y);
-// }
+void mouseDragged() {
+  mouseSelection.mouseDragged(mouseX, mouseY);
+}
+
+void mouseReleased(){
+  mouseSelection.mouseReleased(mouseX, mouseY);
+}

@@ -10,6 +10,12 @@ class VintageFilter extends Filter{
     PImage result = new PImage(img.width, img.height);
     for(int i = 0; i < img.width; i++){
       for(int j = 0; j < img.height; j++){
+
+          if(!shouldApplyPixel( i, j )){
+            result.set(i,j, img.get(i,j)) ;
+            continue;
+          }
+
          color imgColor = img.get(i,j);
          color imgVintageColor = this.vintage.get(i,j);
 

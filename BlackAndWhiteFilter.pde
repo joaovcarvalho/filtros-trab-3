@@ -4,6 +4,10 @@ public class BlackAndWhiteFilter extends Filter{
     PImage result = new PImage(img.width, img.height);
 
     for(int i = 0; i< img.pixels.length; i++){
+      if(!shouldApplyPixel( (int) ( i % img.width), (int) (i/img.width) )){
+        result.pixels[i] = img.pixels[i];
+        continue;
+      }
       color c = color(img.pixels[i]);
       float r = red(c);
       float g = green(c);

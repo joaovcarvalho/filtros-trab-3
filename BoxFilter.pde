@@ -9,7 +9,6 @@ public class BoxFilter extends ConvolutionFilter{
 
  public void generateMatrix(int n){
   matrix = new float[n][n];
-  console.log(matrix);
   for(int i = 0; i < n; i++){
      for(int j = 0 ; j < n; j++){
         matrix[i][j] = 1 / (n*n);

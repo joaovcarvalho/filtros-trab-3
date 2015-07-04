@@ -20,6 +20,11 @@ public class SobelFilter extends Filter{
      for(int i = 0; i < img.width; i++){
        for(int j = 0; j < img.height; j++){
 
+         if(!shouldApplyPixel( i, j )){
+           result.set(i,j, img.get(i,j)) ;
+           continue;
+         }
+
          newRed = 0.0;
          newBlue = 0.0;
          newGreen = 0.0;

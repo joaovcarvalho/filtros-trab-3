@@ -4,6 +4,10 @@ public class BlackAndWhiteFilter extends Filter{
     PImage result = new PImage(img.width, img.height);
 
     for(int i = 0; i< img.pixels.length; i++){
+      if(!shouldApplyPixel( (int) ( i % img.width), (int) (i/img.width) )){
+        result.pixels[i] = img.pixels[i];
+        continue;
+      }
       color c = color(img.pixels[i]);
       float r = red(c);
       float g = green(c);
@@ -30,7 +34,6 @@ public class BoxFilter extends ConvolutionFilter{
 
  public void generateMatrix(int n){
   matrix = new float[n][n];
-  console.log(matrix);
   for(int i = 0; i < n; i++){
      for(int j = 0 ; j < n; j++){
         matrix[i][j] = 1 / (n*n);
@@ -47,6 +50,10 @@ public class ConvolutionFilter extends Filter{
   void generateMatrix(int n){
 
   };
+
+  public float[][] getMatrix(){
+    return this.matrix;
+  }
 
   public void setMatrix(float[][] m){
 
@@ -85,6 +92,11 @@ public class ConvolutionFilter extends Filter{
 
     for(int i = 0; i < img.width; i++){
       for(int j = 0; j < img.height; j++){
+
+        if(!shouldApplyPixel( i, j )){
+          result.set(i,j, img.get(i,j)) ;
+          continue;
+        }
 
         newRed = 0.0;
         newBlue = 0.0;
@@ -145,21 +157,38 @@ public class Crop extends Filter{
 
  
 public class Filter{
-  
+
+  MouseSelection ms = null;
+
+  public void setMouseSelection(MouseSelection ms){
+    if(ms.isSelected()){
+      this.ms = ms;
+    }else{
+      this.ms = null;
+    }
+  }
+
+  public boolean shouldApplyPixel(int x, int y){
+    if(this.ms == null)
+      return true;
+
+    return ms.isPixelSelected(x,y);
+  }
+
  public PImage apply(PImage img){
     return img;
  }
- 
+
  public int bound(int i, int bound){
     if( i < 0)
      return 0;
-    
+
     if (i < bound)
       return i;
-      
+
     return bound - 1;
  }
-  
+
 }
 
  
@@ -181,9 +210,12 @@ PImage result;
 MouseSelection mouseSelection;
 
 void setup() {
-  size(400, 400, OPENGL);
+  size(400, 400);
   // The image file must be in the data folder of the current sketch
   // to load successfully
+  UnitTests ut = new UnitTests();
+  ut.runTests();
+
   inputManager = new InputManager();
   inputManager.requestImage("Selecione uma image: ");
 
@@ -194,26 +226,11 @@ void setup() {
 void draw() {
   // Displays the image at its actual size at point (0,0)
   background(255);
-
-  if(inputManager.getImage() == null){
-    // return;
-  }else{
+  if(inputManager.getImage() != null){
     image(inputManager.getImage(), 0, 0);
   }
 
-  //mouseSelection.displaySelectionBox();
-
-}
-
-
-void printMatrix(float[][] m){
-  for(int i = 0; i < m.length; i++){
-    for(int j =0; j < m[i].length; j++){
-      print(m[i][j] + " ");
-    }
-    println("");
-  }
-
+  mouseSelection.displaySelectionBox();
 }
 
  /* this is being called from JavaScript when the range slider is changed */
@@ -246,7 +263,7 @@ void applyFilter(int i, callback){
 
   if(i == 4)
     try{
-      filter = new GaussianBlur($('#sigma').val(),$('#size-gaussian').val());
+      filter = new GaussianBlur( (int) $('#size-gaussian').val(), (int) $('#sigma').val());
     } catch(e){
       $("#error2-box").html("O tamanho da matriz não pode ser par.");
     }
@@ -255,11 +272,24 @@ void applyFilter(int i, callback){
   if(i == 5)
     filter = new SobelFilter();
 
-  if(i == 6)
-    filter = new Crop($("#x-inicial").val(),
-                      $("#y-inicial").val(),
-                      $("#x-final").val(),
-                      $("#y-final").val());
+  if(i == 6){
+
+    int xi, yi, xf, yf;
+    if(mouseSelection.isSelected()){
+      xi = mouseSelection.getSelectedInitial().x;
+      yi = mouseSelection.getSelectedInitial().y;
+      xf = mouseSelection.getSelectedFinal().x;
+      yf = mouseSelection.getSelectedFinal().y;
+    }else{
+      xi = $("#x-inicial").val();
+      yi = $("#y-inicial").val();
+      xf = $("#x-final").val();
+      yf = $("#y-final").val();
+    }
+
+    filter = new Crop(xi,yi, xf, yf);
+
+  }
 
   if(i == 7){
     filter = new ConvolutionFilter(3);
@@ -280,6 +310,7 @@ void applyFilter(int i, callback){
   if(filter == null){
     result = inputManager.getImage();
   }else{
+    filter.setMouseSelection(mouseSelection);
     result = filter.apply(inputManager.getImage());
   }
 
@@ -291,16 +322,17 @@ void getImageResult(){
   return object;
 }
 
+ void mouseClicked() {
+  mouseSelection.mouseClicked(mouseX, mouseY);
+}
 
-// void mouseClicked(int x, int y) {
-//   mouseSelection.mouseClicked(x, y);
-// }
-//
-// void mouseDragged(int x, int y) {
-//   console.log(x);
-//   console.log(y);
-//   mouseSelection.mouseClicked(x, y);
-// }
+void mouseDragged() {
+  mouseSelection.mouseDragged(mouseX, mouseY);
+}
+
+void mouseReleased(){
+  mouseSelection.mouseReleased(mouseX, mouseY);
+}
 
  
 public class GaussianBlur extends ConvolutionFilter{
@@ -395,33 +427,84 @@ public class InputManager {
  
 public class MouseSelection{
 
-  int xInicial, yInicial, xFinal, yFinal;
+  PVector mouseInitial;
+  PVector mouseFinal;
+
+  PVector selectedInitial;
+  PVector selectedFinal;
+
+  boolean selecting = false;
+  boolean selected = false;
 
   public MouseSelection(){
-    xInicial = 0;
-    yInicial = 0;
-    xFinal = 0;
-    yFinal = 0;
+    mouseInitial = new PVector(0,0);
+    mouseFinal = new PVector(0,0);
+    selectedInitial = new PVector(0,0);
+    selectedFinal = new PVector(0,0);
   }
 
   public void mouseClicked(int x, int y){
-    xInicial = x;
-    yInicial = y;
-    xFinal = x;
-    yFinal = y;
+    mouseInitial = new PVector(0,0);
+    mouseFinal = new PVector(0,0);
+    selectedInitial = new PVector(0,0);
+    selectedFinal = new PVector(0,0);
+    selected = false;
   }
 
   public void mouseDragged(int x, int y){
-    xFinal = x;
-    yFinal = y;
+    if(mouseInitial.x == 0 && mouseInitial.y == 0){
+      mouseInitial = new PVector(x,y);
+      selecting = true;
+      selectedInitial = new PVector(0,0);
+      selectedFinal = new PVector(0,0);
+    }
+
+    mouseFinal = new PVector(x,y);
+  }
+
+  public void mouseReleased(int x , int y){
+    selectedInitial = mouseInitial;
+    selectedFinal = mouseFinal;
+
+
+    mouseInitial = new PVector(0,0);
+    mouseFinal = new PVector(0,0);
+    selecting = false;
+    selected = true;
+    if(selectedInitial.x == selectedFinal.x && selectedInitial.y == selectedFinal.y){
+      selected = false;
+    }
   }
 
   public void displaySelectionBox(){
-    //stroke(0);
-    //rect(xInicial, yInicial, xFinal - xInicial, yFinal - yInicial);
-    ellipseMode(CENTER);
-    ellipse(xInicial, yInicial, 50, 50);
-    //line(xInicial, yInicial, xFinal , yFinal );
+    fill(255,0,0, 100);
+    // stroke(255,0,0);
+    noStroke();
+    rectMode(CORNER);
+    if(selecting){
+      rect(mouseInitial.x, mouseInitial.y, mouseFinal.x - mouseInitial.x, mouseFinal.y - mouseInitial.y);
+    }else{
+      rect(selectedInitial.x, selectedInitial.y, selectedFinal.x - selectedInitial.x, selectedFinal.y - selectedInitial.y);
+    }
+  }
+
+  public boolean isSelected(){
+    return selected;
+  }
+
+  public PVector getSelectedInitial(){
+    return selectedInitial;
+  }
+
+  public PVector getSelectedFinal(){
+    return selectedFinal;
+  }
+
+  public boolean isPixelSelected(int x, int y){
+    return (x < selectedFinal.x) &&
+           (y < selectedFinal.y) &&
+           (x > selectedInitial.x) &&
+           (y > selectedInitial.y);
   }
 }
 
@@ -447,6 +530,11 @@ public class SobelFilter extends Filter{
 
      for(int i = 0; i < img.width; i++){
        for(int j = 0; j < img.height; j++){
+
+         if(!shouldApplyPixel( i, j )){
+           result.set(i,j, img.get(i,j)) ;
+           continue;
+         }
 
          newRed = 0.0;
          newBlue = 0.0;
@@ -482,6 +570,49 @@ public class SobelFilter extends Filter{
 }
 
  
+public class UnitTests {
+
+  private boolean passed = true;
+
+  public void runTests(){
+    console.log("============ UNIT TESTS =============== ");
+
+    ConvolutionFilter b ;
+
+    b = new BoxFilter(3);
+    assertTrue( 1 - sumMatrix(b.getMatrix()) < 0.000001 );
+
+    b = new GaussianBlur(3,1);
+    assertTrue( 1 - sumMatrix(b.getMatrix()) < 0.000001 );
+
+    terminateTests();
+  }
+
+  public void terminateTests(){
+    if(passed){
+      console.log("ALL TESTS PASSING ! OK. YOU'RE GOOD TO GO!");
+    }
+  }
+
+  public boolean assertTrue(boolean b){
+    if(!b){
+      console.log("ASSERTION FAILED");
+      passed = false;
+    }
+  }
+
+  public float sumMatrix(float[][] m){
+    float sum = 0.0;
+    for(int i = 0; i < m.length; i++)
+      for(int j = 0; j < m[i].length; j++ )
+        sum += m[i][j];
+
+    return sum;
+  }
+
+}
+
+ 
 class VintageFilter extends Filter{
 
   private PImage vintage;
@@ -494,6 +625,12 @@ class VintageFilter extends Filter{
     PImage result = new PImage(img.width, img.height);
     for(int i = 0; i < img.width; i++){
       for(int j = 0; j < img.height; j++){
+
+          if(!shouldApplyPixel( i, j )){
+            result.set(i,j, img.get(i,j)) ;
+            continue;
+          }
+
          color imgColor = img.get(i,j);
          color imgVintageColor = this.vintage.get(i,j);
 
