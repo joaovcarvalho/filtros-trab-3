@@ -22,18 +22,20 @@ public class BlackAndWhiteFilter extends Filter{
 public class BoxFilter extends ConvolutionFilter{
 
  BoxFilter(int n){
+   if(n % 2 == 0)
+     throw new Exception();
+
     generateMatrix(n);
  }
 
  public void generateMatrix(int n){
   matrix = new float[n][n];
+  console.log(matrix);
   for(int i = 0; i < n; i++){
      for(int j = 0 ; j < n; j++){
         matrix[i][j] = 1 / (n*n);
      }
    }
-
-   console.log(matrix);
   }
 }
 
@@ -47,7 +49,27 @@ public class ConvolutionFilter extends Filter{
   };
 
   public void setMatrix(float[][] m){
+
     this.matrix = m;
+    int n = m.length;
+    float sum = 0.0;
+    for (int i = 0; i < n; ++i) {
+      for (int j = 0; j < n; ++j) {
+        sum = (int) (sum + (int) m[i][j]);
+      }
+    }
+
+    if(sum == 0){
+      return;
+    }
+
+    for (int i = 0; i < n; ++i) {
+      for (int j = 0; j < n; ++j) {
+        m[i][j] = m[i][j]/sum;
+      }
+    }
+
+
   }
 
  public PImage apply(PImage img){
@@ -94,9 +116,18 @@ public class ConvolutionFilter extends Filter{
 }
 
  
-public class Crop{
+public class Crop extends Filter{
 
-  public PImage apply(PImage img, int xInicial, int yInicial, int xFinal, int yFinal){
+  int xInicial; int yInicial; int xFinal; int yFinal;
+
+  public Crop(int xInicial, int yInicial, int xFinal, int yFinal){
+    this.xInicial = xInicial;
+    this.yInicial = yInicial;
+    this.xFinal = xFinal;
+    this.yFinal = yFinal;
+  }
+
+  public PImage apply(PImage img){
     PImage result = new PImage(xFinal - xInicial, yFinal - yInicial);
     for(int i = xInicial; i < xFinal; i++){
       for(int j = yInicial; j < yFinal; j++){
@@ -105,6 +136,7 @@ public class Crop{
     }
 
     result.updatePixels();
+    console.log(result);
     return result;
   }
 
@@ -146,25 +178,31 @@ public class Filter{
 InputManager inputManager;
 Filter filter;
 PImage result;
+MouseSelection mouseSelection;
 
 void setup() {
-  size(400, 400);
+  size(400, 400, OPENGL);
   // The image file must be in the data folder of the current sketch
   // to load successfully
   inputManager = new InputManager();
   inputManager.requestImage("Selecione uma image: ");
 
-  filter = new SobelFilter();
+  mouseSelection = new MouseSelection();
+  filter = null;
 }
 
 void draw() {
   // Displays the image at its actual size at point (0,0)
   background(255);
+
   if(inputManager.getImage() == null){
-    return;
+    // return;
   }else{
     image(inputManager.getImage(), 0, 0);
   }
+
+  //mouseSelection.displaySelectionBox();
+
 }
 
 
@@ -195,13 +233,56 @@ void applyFilter(int i, callback){
   if(i == 2)
     filter = new BlackAndWhiteFilter();
 
-  if(i == 3)
-    filter = new BoxFilter(3);
+  if(i == 3){
+
+    try{
+      filter = new BoxFilter( (int) $('#size-box').val() );
+    }catch(e){
+      $("#error-box").html("O tamanho da matriz não pode ser par.");
+    }
+
+  }
+
 
   if(i == 4)
-    filter = new GaussianBlur(5,5);
+    try{
+      filter = new GaussianBlur($('#sigma').val(),$('#size-gaussian').val());
+    } catch(e){
+      $("#error2-box").html("O tamanho da matriz não pode ser par.");
+    }
 
-  result = filter.apply(inputManager.getImage());
+
+  if(i == 5)
+    filter = new SobelFilter();
+
+  if(i == 6)
+    filter = new Crop($("#x-inicial").val(),
+                      $("#y-inicial").val(),
+                      $("#x-final").val(),
+                      $("#y-final").val());
+
+  if(i == 7){
+    filter = new ConvolutionFilter(3);
+
+    float[][] matrix;
+    matrix = new float[3][3];
+
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < 3; ++j) {
+        matrix[i][j] = $("#"+(i+1)+"-"+(j+1)).val();
+      }
+    }
+
+
+    filter.setMatrix(matrix);
+  }
+
+  if(filter == null){
+    result = inputManager.getImage();
+  }else{
+    result = filter.apply(inputManager.getImage());
+  }
+
   callback();
 }
 
@@ -210,11 +291,25 @@ void getImageResult(){
   return object;
 }
 
+
+// void mouseClicked(int x, int y) {
+//   mouseSelection.mouseClicked(x, y);
+// }
+//
+// void mouseDragged(int x, int y) {
+//   console.log(x);
+//   console.log(y);
+//   mouseSelection.mouseClicked(x, y);
+// }
+
  
 public class GaussianBlur extends ConvolutionFilter{
   private float sigma = 1;
 
  GaussianBlur(int n, float s){
+    if(n % 2 == 0)
+       throw new Exception();
+
     this.sigma = s;
     generateMatrix(n);
  }
@@ -226,9 +321,9 @@ public class GaussianBlur extends ConvolutionFilter{
     for(int i = 0; i < n; i++){
        for(int j = 0 ; j < n; j++){
           matrix[i][j] = exp( -0.5 * ( pow( (i-mean) /sigma, 2.0) + pow( (j-mean)/sigma,2.0) ) )
-                         / (2 * PI * sigma * sigma); 
+                         / (2 * PI * sigma * sigma);
 
-          sum += matrix[i][j];               
+          sum += matrix[i][j];
        }
      }
 
@@ -295,6 +390,39 @@ public class InputManager {
     }
 
 
+}
+
+ 
+public class MouseSelection{
+
+  int xInicial, yInicial, xFinal, yFinal;
+
+  public MouseSelection(){
+    xInicial = 0;
+    yInicial = 0;
+    xFinal = 0;
+    yFinal = 0;
+  }
+
+  public void mouseClicked(int x, int y){
+    xInicial = x;
+    yInicial = y;
+    xFinal = x;
+    yFinal = y;
+  }
+
+  public void mouseDragged(int x, int y){
+    xFinal = x;
+    yFinal = y;
+  }
+
+  public void displaySelectionBox(){
+    //stroke(0);
+    //rect(xInicial, yInicial, xFinal - xInicial, yFinal - yInicial);
+    ellipseMode(CENTER);
+    ellipse(xInicial, yInicial, 50, 50);
+    //line(xInicial, yInicial, xFinal , yFinal );
+  }
 }
 
  

@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html>
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
@@ -59,6 +58,9 @@
 				<li><a href="#tabs-2" id="2">Black And White</a></li>
 				<li><a href="#tabs-3" id="3">Blur</a></li>
 				<li><a href="#tabs-4" id="4">Gaussian Blur</a></li>
+				<li><a href="#tabs-5" id="5">Sobel</a></li>
+				<li><a href="#tabs-6" id="6">Crop</a></li>
+				<li><a href="#tabs-7" id="7">ConvolutionFilter</a></li>
 			</ul>
 
 			<div id="tabs_container">
@@ -71,12 +73,84 @@
 				</div>
 
 				<div id="tabs-3">
-					Size: <input type="text" name="size" id="size-box" value=""> <br>
+					<p class="">
+						Size: <input type="text" name="size" id="size-box" value="">
+					</p>
+
+					<p id="error-box">
+					</p>
 				</div>
 
 				<div id="tabs-4">
-					Sigma:<br> <input type="text" name="size" id="sigma" value="">
-					Size:<br> <input type="text" name="size" id="size-gaussian" value="">
+					<p>
+						Sigma:<input type="text" name="size" id="sigma" value="">
+					</p>
+
+					<p>
+						Size: <input type="text" name="size" id="size-gaussian" value="">
+					</p>
+
+					<p id="error2-box">
+
+					</p>
+				</div>
+
+				<div id="tabs-5">
+						Filtro Sobel para extremidades.
+				</div>
+
+				<div id="tabs-6">
+						<p>
+							Crop usando o mouse.
+						</p>
+
+						<table>
+							<tr>
+								<th>
+									(X,Y) Inicial
+								</th>
+
+								<th>
+									(X,Y) Final
+								</th>
+							</tr>
+
+							<tr>
+								<td><input type="text" name="name" id="x-inicial" value="0"></td>
+								<td><input type="text" name="name" id="x-final" value="200"></td>
+							</tr>
+							<tr>
+								<td><input type="text" name="name" id="y-inicial" value="0"></td>
+								<td><input type="text" name="name" id="y-final" value="200"></td>
+							</tr>
+						</table>
+
+
+				</div>
+
+				<div id="tabs-7">
+						<p>
+							Matriz de Convolução:
+						</p>
+
+						<table>
+							<tr>
+								<td><input type="text" name="name" id="1-1" value="1"></th>
+								<td><input type="text" name="name" id="1-2" value="1"></th>
+								<td><input type="text" name="name" id="1-3" value="1"></th>
+							</tr>
+							<tr>
+								<td><input type="text" name="name" id="2-1" value="1"></td>
+								<td><input type="text" name="name" id="2-2" value="1"></td>
+								<td><input type="text" name="name" id="2-3" value="1"></td>
+							</tr>
+
+							<tr>
+								<td><input type="text" name="name" id="3-1" value="1"></td>
+								<td><input type="text" name="name" id="3-2" value="1"></td>
+								<td><input type="text" name="name" id="3-3" value="1"></td>
+							</tr>
+						</table>
 				</div>
 
 			</div><!--End tabs container-->

@@ -1,6 +1,15 @@
-public class Crop{
+public class Crop extends Filter{
 
-  public PImage apply(PImage img, int xInicial, int yInicial, int xFinal, int yFinal){
+  int xInicial; int yInicial; int xFinal; int yFinal;
+
+  public Crop(int xInicial, int yInicial, int xFinal, int yFinal){
+    this.xInicial = xInicial;
+    this.yInicial = yInicial;
+    this.xFinal = xFinal;
+    this.yFinal = yFinal;
+  }
+
+  public PImage apply(PImage img){
     PImage result = new PImage(xFinal - xInicial, yFinal - yInicial);
     for(int i = xInicial; i < xFinal; i++){
       for(int j = yInicial; j < yFinal; j++){
@@ -9,6 +18,7 @@ public class Crop{
     }
 
     result.updatePixels();
+    console.log(result);
     return result;
   }
 

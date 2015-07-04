@@ -13,25 +13,31 @@
 InputManager inputManager;
 Filter filter;
 PImage result;
+MouseSelection mouseSelection;
 
 void setup() {
-  size(400, 400);
+  size(400, 400, OPENGL);
   // The image file must be in the data folder of the current sketch
   // to load successfully
   inputManager = new InputManager();
   inputManager.requestImage("Selecione uma image: ");
 
-  filter = new SobelFilter();
+  mouseSelection = new MouseSelection();
+  filter = null;
 }
 
 void draw() {
   // Displays the image at its actual size at point (0,0)
   background(255);
+
   if(inputManager.getImage() == null){
-    return;
+    // return;
   }else{
     image(inputManager.getImage(), 0, 0);
   }
+
+  //mouseSelection.displaySelectionBox();
+
 }
 
 
@@ -62,13 +68,56 @@ void applyFilter(int i, callback){
   if(i == 2)
     filter = new BlackAndWhiteFilter();
 
-  if(i == 3)
-    filter = new BoxFilter(3);
+  if(i == 3){
+
+    try{
+      filter = new BoxFilter( (int) $('#size-box').val() );
+    }catch(e){
+      $("#error-box").html("O tamanho da matriz não pode ser par.");
+    }
+
+  }
+
 
   if(i == 4)
-    filter = new GaussianBlur(5,5);
+    try{
+      filter = new GaussianBlur($('#sigma').val(),$('#size-gaussian').val());
+    } catch(e){
+      $("#error2-box").html("O tamanho da matriz não pode ser par.");
+    }
 
-  result = filter.apply(inputManager.getImage());
+
+  if(i == 5)
+    filter = new SobelFilter();
+
+  if(i == 6)
+    filter = new Crop($("#x-inicial").val(),
+                      $("#y-inicial").val(),
+                      $("#x-final").val(),
+                      $("#y-final").val());
+
+  if(i == 7){
+    filter = new ConvolutionFilter(3);
+
+    float[][] matrix;
+    matrix = new float[3][3];
+
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < 3; ++j) {
+        matrix[i][j] = $("#"+(i+1)+"-"+(j+1)).val();
+      }
+    }
+
+
+    filter.setMatrix(matrix);
+  }
+
+  if(filter == null){
+    result = inputManager.getImage();
+  }else{
+    result = filter.apply(inputManager.getImage());
+  }
+
   callback();
 }
 
@@ -76,3 +125,14 @@ void getImageResult(){
   var object = { 'data': result.pixels, 'width': result.width, 'height': result.height };
   return object;
 }
+
+
+// void mouseClicked(int x, int y) {
+//   mouseSelection.mouseClicked(x, y);
+// }
+//
+// void mouseDragged(int x, int y) {
+//   console.log(x);
+//   console.log(y);
+//   mouseSelection.mouseClicked(x, y);
+// }

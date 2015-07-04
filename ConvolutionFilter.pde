@@ -7,7 +7,27 @@ public class ConvolutionFilter extends Filter{
   };
 
   public void setMatrix(float[][] m){
+
     this.matrix = m;
+    int n = m.length;
+    float sum = 0.0;
+    for (int i = 0; i < n; ++i) {
+      for (int j = 0; j < n; ++j) {
+        sum = (int) (sum + (int) m[i][j]);
+      }
+    }
+
+    if(sum == 0){
+      return;
+    }
+
+    for (int i = 0; i < n; ++i) {
+      for (int j = 0; j < n; ++j) {
+        m[i][j] = m[i][j]/sum;
+      }
+    }
+
+
   }
 
  public PImage apply(PImage img){
