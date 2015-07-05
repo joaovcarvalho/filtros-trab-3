@@ -18,7 +18,6 @@ public class Crop extends Filter{
     }
 
     result.updatePixels();
-    console.log(result);
     return result;
   }
 

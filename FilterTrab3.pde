@@ -113,6 +113,10 @@ void applyFilter(int i, callback){
     filter.setMatrix(matrix);
   }
 
+  if(i == 8){
+    filter = new Resize( (int) $("#width").val(), (int) $("#height").val());
+  }
+
   if(filter == null){
     result = inputManager.getImage();
   }else{
