@@ -117,6 +117,9 @@ void applyFilter(int i, callback){
     filter = new Resize( (int) $("#width").val(), (int) $("#height").val());
   }
 
+  if(i == 9)
+    filter = new OptimizationFilter();
+
   if(filter == null){
     result = inputManager.getImage();
   }else{
